@@ -1,0 +1,55 @@
+[project]
+name = "queguagua"
+version = "0.1.0"
+description = "¿Qué guagua cojo? A JSON-first CLI for Spanish buses (guaguas), starting with ALSA: search, fares, seats, extras, Abono Único and checkout with your saved payment methods"
+readme = "README.md"
+license = "MIT"
+keywords = ["guagua", "bus", "alsa", "spain", "abono-unico", "cli", "json"]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Environment :: Console",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Utilities",
+]
+requires-python = ">=3.12"
+dependencies = [
+    "httpx[http2]>=0.28.1",
+    "typer>=0.15",
+    "tzdata; sys_platform == 'win32'",
+]
+
+[project.urls]
+Homepage = "https://queguagua.com"
+Repository = "https://github.com/joseluissaorin/queguagua"
+Issues = "https://github.com/joseluissaorin/queguagua/issues"
+
+[project.scripts]
+queguagua = "queguagua.cli:main"
+qg = "queguagua.cli:main"
+
+[project.optional-dependencies]
+# Only for paying through Worldline's page (new card, saved card with 3-D Secure, PayPal, Bizum, Google Pay).
+checkout = [
+    "playwright>=1.50,<2",
+]
+
+[build-system]
+requires = ["uv_build>=0.8,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "queguagua"
+# Never ship captures, tickets or booking data that end up under src/.
+source-exclude = ["**/.env", "**/.env.*", "**/*.cookies", "**/*.har", "**/*.pdf", "**/*.pkpass", "**/*.jsonl"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+]
+
+[tool.pytest.ini_options]
+markers = ["live: calls the real ALSA website; skipped unless ALSA_LIVE=1"]

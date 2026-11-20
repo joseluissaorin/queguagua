@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+.venv/
+dist/
+*.har
+*.jsonl
+*.pdf
+*.cookies
+.env
+.env.*
+captures/
+web/dist/
+web/node_modules/

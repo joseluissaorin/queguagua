@@ -1,0 +1,132 @@
+/* La página: papel crema y todo escrito con el mismo bolígrafo ultramarino. */
+:root {
+  --ultramar: #2433b5;
+  --ultramar-lapiz: rgb(36 51 181 / .42);
+  --ultramar-suave: rgb(36 51 181 / .08);
+  --papel: #faf7f0;
+  --mano: 'Mano', 'Segoe Print', 'Bradley Hand', cursive;
+  --texto: Georgia, 'Times New Roman', serif;
+  --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--papel);
+  color: var(--ultramar);
+  font: 18px/1.6 var(--texto);
+  text-rendering: optimizeLegibility;
+}
+a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: .18em; }
+a:hover { text-decoration-thickness: 2px; }
+code { font: .86em var(--mono); font-variant-ligatures: none; }
+::selection { background: var(--ultramar); color: var(--papel); }
+
+.cabecera {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 22px 24px 0;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+}
+.marca { font: 34px/1 var(--mano); text-decoration: none; letter-spacing: .01em; }
+.nota-cabecera { font: 19px/1 var(--mano); transform: rotate(-3deg); opacity: .8; }
+
+.portada { max-width: 1120px; margin: 0 auto; padding: 8px 24px 40px; }
+.lema { max-width: 720px; margin: 8px auto 0; text-align: center; }
+h1 {
+  font: 400 clamp(44px, 7vw, 76px)/1.05 var(--mano);
+  margin: 0 0 14px;
+  transform: rotate(-1.2deg);
+}
+.entrada { font-size: 20px; margin: 0 auto 26px; max-width: 640px; }
+
+.instalar {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  max-width: 680px;
+  margin: 0 auto;
+  text-align: left;
+}
+.instalar pre, .terminal {
+  margin: 0;
+  border: 1.6px solid var(--ultramar);
+  border-radius: 14px 4px 12px 5px / 5px 12px 4px 14px;
+  background: transparent;
+  overflow-x: auto;
+  font-variant-ligatures: none;
+}
+.instalar pre { flex: 1; min-width: 0; padding: 12px 14px; font-size: 15px; white-space: nowrap; }
+.copiar {
+  font: 20px/1 var(--mano);
+  color: var(--ultramar);
+  background: transparent;
+  border: 1.6px solid var(--ultramar);
+  border-radius: 4px 12px 5px 14px / 12px 4px 14px 5px;
+  padding: 0 16px;
+  cursor: pointer;
+}
+.copiar:hover { background: var(--ultramar); color: var(--papel); }
+.copiar:focus-visible, a:focus-visible { outline: 2px dashed var(--ultramar); outline-offset: 3px; }
+.aviso { font-size: 15px; margin-top: 12px; opacity: .85; }
+
+main .bloque { max-width: 760px; margin: 0 auto; padding: 28px 24px; }
+h2 {
+  font: 400 40px/1.1 var(--mano);
+  margin: 0 0 14px;
+  transform: rotate(-.8deg);
+  transform-origin: left;
+}
+.bloque > p { margin: 0 0 14px; }
+.terminal { padding: 16px 18px; margin: 0 0 22px; font-size: 14.5px; line-height: 1.55; }
+.terminal code { font-size: inherit; white-space: pre; }
+
+.hace { display: grid; grid-template-columns: 1fr 1fr; gap: 22px 34px; margin: 6px 0 0; }
+.hace dt { font: 27px/1.1 var(--mano); margin-bottom: 4px; }
+.hace dd { margin: 0; font-size: 17px; }
+
+.empresas { list-style: none; margin: 0; padding: 0; }
+.empresas li {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 4px 16px;
+  align-items: baseline;
+  padding: 12px 0;
+  border-bottom: 1.4px dashed var(--ultramar-lapiz);
+}
+.empresas li:last-child { border-bottom: 0; }
+.empresas strong { font: 400 26px/1.1 var(--mano); }
+.empresas span { font-size: 16px; }
+.empresas em { font: 20px/1 var(--mano); font-style: normal; transform: rotate(-4deg); }
+.empresas .pronto { opacity: .7; }
+
+.faq div { padding: 10px 0 12px; }
+.faq dt { font-weight: 700; }
+.faq dd { margin: 2px 0 0; }
+
+.pie {
+  max-width: 760px;
+  margin: 10px auto 0;
+  padding: 26px 24px 44px;
+  font-size: 15px;
+  opacity: .85;
+  border-top: 1.4px dashed var(--ultramar-lapiz);
+}
+.pie p { margin: 0 0 6px; }
+
+@media (max-width: 680px) {
+  body { font-size: 17px; }
+  .cabecera, .portada, main .bloque, .pie { padding-left: 16px; padding-right: 16px; }
+  .marca { font-size: 28px; }
+  .entrada { font-size: 18px; }
+  .instalar { flex-direction: column; }
+  .copiar { padding: 10px 16px; }
+  .hace { grid-template-columns: 1fr; }
+  .empresas li { grid-template-columns: 1fr auto; }
+  .empresas span { grid-column: 1 / -1; }
+  .terminal { font-size: 13px; }
+}

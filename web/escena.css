@@ -1,0 +1,84 @@
+/*
+ * La escena: capas apiladas y sus fotogramas clave. Todo es azul ultramarino.
+ * Las animaciones empiezan cuando la pluma termina (--fin) y solo si la página
+ * anima (clase `anima` en <html>, que no se pone con prefers-reduced-motion).
+ */
+.escena {
+  --fin: 7.1s;
+  position: relative;
+  margin: 0;
+  width: 100%;
+}
+.escena .capa { position: absolute; inset: 0; }
+.escena .capa > svg.dibujo { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+/* Un solo color: las tintas del motor, todas en ultramarino (el lápiz, más claro). */
+.escena .dibujo {
+  --d-tinta: var(--ultramar);
+  --d-azul: var(--ultramar);
+  --d-rojo: var(--ultramar);
+  --d-oro: var(--ultramar);
+  --d-negro: var(--ultramar);
+  --d-lapiz: var(--ultramar-lapiz);
+  --d-papel: transparent;
+}
+
+/* Los pivotes de cada parte (transform-origin) los calcula escena.ts a partir del dibujo. */
+/* Las pupilas parpadean con su svg y miran con su capa: el svg hereda el pivote de los ojos. */
+.escena .pupilas > svg { transform-origin: inherit; }
+
+@media screen and (prefers-reduced-motion: no-preference) {
+  /* La guagua llega a la parada: frena, cabecea y se queda al ralentí. */
+  .anima .escena.visto .guagua { animation: frenazo 1.1s cubic-bezier(.2, .7, .3, 1) var(--fin) both; }
+  .anima .escena.visto .rueda { animation: rueda-frena 1.1s cubic-bezier(.2, .7, .3, 1) var(--fin) both; }
+  .anima .escena.visto .caja { animation: ralenti .36s ease-in-out calc(var(--fin) + 1.1s) infinite alternate; }
+
+  .anima .escena.visto .ojos,
+  .anima .escena.visto .pupilas > svg { animation: parpadeo 4.6s linear calc(var(--fin) + .9s) infinite; }
+  .anima .escena.visto .pupilas { animation: mirada 7s ease-in-out calc(var(--fin) + 1.6s) infinite; }
+
+  .anima .escena.visto .brazo { animation: saludo .55s ease-in-out calc(var(--fin) - .4s) infinite alternate; }
+  .anima .escena.visto .perro { animation: meneo .7s ease-in-out calc(var(--fin) + .2s) infinite alternate; }
+  .anima .escena.visto .guau { animation: ladrido 1.4s ease-out calc(var(--fin) + .2s) infinite; }
+
+  .anima .escena.visto .humo { animation: bocanada 2.4s ease-out infinite; }
+  .anima .escena.visto .h1 { animation-delay: calc(var(--fin) + 1.1s); }
+  .anima .escena.visto .h2 { animation-delay: calc(var(--fin) + 1.9s); }
+  .anima .escena.visto .h3 { animation-delay: calc(var(--fin) + 2.7s); }
+
+  .anima .escena.visto .pregunta { animation: flota 1.9s ease-in-out var(--fin) infinite alternate; }
+  .anima .escena.visto .respuesta { animation: flota 2.3s ease-in-out calc(var(--fin) + .5s) infinite alternate; }
+}
+
+@keyframes frenazo {
+  0% { transform: translateX(3.5%); }
+  55% { transform: translateX(-.9%) rotate(-.9deg); }
+  80% { transform: translateX(.25%) rotate(.3deg); }
+  100% { transform: none; }
+}
+@keyframes rueda-frena { from { transform: rotate(140deg); } to { transform: rotate(0deg); } }
+@keyframes ralenti { from { transform: translateY(0); } to { transform: translateY(-.3%); } }
+@keyframes parpadeo {
+  0%, 91%, 100% { transform: scaleY(1); }
+  94% { transform: scaleY(.08); }
+  97% { transform: scaleY(1); }
+}
+@keyframes mirada {
+  0%, 52% { transform: translate(0, 0); }
+  60%, 82% { transform: translate(.62%, -.25%); }
+  90%, 100% { transform: translate(0, 0); }
+}
+@keyframes saludo { from { transform: rotate(-16deg); } to { transform: rotate(9deg); } }
+@keyframes meneo { from { transform: rotate(-6deg); } to { transform: rotate(7deg); } }
+@keyframes ladrido {
+  0%, 30%, 100% { transform: scale(1); }
+  8% { transform: scale(1.1) rotate(-2deg); }
+  16% { transform: scale(1); }
+  22% { transform: scale(1.06) rotate(1deg); }
+}
+@keyframes bocanada {
+  0% { opacity: 0; transform: translate(-1.4%, 1.6%) scale(.4); }
+  15% { opacity: 1; }
+  100% { opacity: 0; transform: translate(2.4%, -6%) scale(1.4); }
+}
+@keyframes flota { from { transform: translateY(0); } to { transform: translateY(-.7%); } }
