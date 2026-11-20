@@ -71,4 +71,4 @@ export function escena(): string {
 }
 
 /** Cuánto tarda la pluma en terminar la escena entera (las animaciones empiezan después). */
-export const FIN_DIBUJO = 6.9;
+export const FIN_DIBUJO = 6.9 * 0.4; // con --ritmo .4 (escena.css)

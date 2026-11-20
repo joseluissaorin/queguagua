@@ -4,7 +4,8 @@
  * anima (clase `anima` en <html>, que no se pone con prefers-reduced-motion).
  */
 .escena {
-  --fin: 7.1s;
+  --ritmo: .4;   /* la pluma, a 2,5 veces su velocidad: la escena entera en unos 2,8 s */
+  --fin: 2.9s;
   position: relative;
   margin: 0;
   width: 100%;
