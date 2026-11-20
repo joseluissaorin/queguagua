@@ -1,8 +1,13 @@
 // La web de queguagua: una página estática servida por un Worker con sus «assets».
 //   cd web && npx tsx build.ts && npx wrangler deploy
-// Las rutas de queguagua.com se añaden cuando el dominio esté registrado en la cuenta.
 {
   "name": "queguagua",
+  "account_id": "f22c7a728ddc8e41cefd2644f8fb7632",
   "compatibility_date": "2026-11-01",
-  "assets": { "directory": "./dist" }
+  "assets": { "directory": "./dist" },
+  "workers_dev": false,
+  "routes": [
+    { "pattern": "queguagua.com", "custom_domain": true },
+    { "pattern": "www.queguagua.com", "custom_domain": true }
+  ]
 }
