@@ -118,7 +118,7 @@ def stations(
 
 # ---- search --------------------------------------------------------------------------------------------
 
-DateOpt = Annotated[str, typer.Option("--date", "-d", help="YYYY-MM-DD, DD/MM/YYYY, today or tomorrow.")]
+DateOpt = Annotated[str, typer.Option("--date", "-d", help="YYYY-MM-DD, DD/MM/YYYY, today, tomorrow or a weekday (friday, viernes).")]
 
 
 def _passengers(adults: int, young: int, seniors: int, children: int, babies: int) -> search_mod.Passengers:

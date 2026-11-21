@@ -52,6 +52,7 @@ Klarna. Searching, quoting, the Abono Único, points, purse and everything else 
 queguagua alsa stations granada                                   # find a stop or its id
 queguagua alsa search Granada Madrid -d 2026-12-04 --after 07:00 --limit 3
 queguagua alsa search Granada Madrid -d 2026-12-04 --abono        # with your Abono Único (needs `queguagua alsa login`)
+queguagua alsa search Granada Madrid -d viernes --abono           # dates also take a weekday: the next one (friday, viernes)
 queguagua alsa seats Granada Madrid -d 2026-12-04 -t 08:00        # seat map and extras, books nothing
 queguagua alsa quote Granada Madrid -d 2026-12-04 -t 08:00 --package flexible --seat-pref window --extra insurance
 queguagua alsa buy Granada Madrid -d 2026-12-04 -t 08:00 --abono --yes          # 0 € with the Abono Único

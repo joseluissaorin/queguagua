@@ -63,3 +63,27 @@ def test_queue_it_bounce_is_followed_and_request_resent():
         out = search.run(c, _req(), search.Filters())
     assert out["count"] == 2
     assert sum(1 for m, p, r in fake.calls if r == "GetJourneyListResource") == 2
+
+
+def test_parse_date_weekdays():
+    from queguagua.alsa import config
+    from datetime import date
+    viernes = date(2026, 11, 20)  # un viernes
+    assert config.parse_date("viernes", now=viernes) == date(2026, 11, 27)
+    assert config.parse_date("Friday", now=viernes) == date(2026, 11, 27)
+    assert config.parse_date("sábado", now=viernes) == date(2026, 11, 21)
+    assert config.parse_date("jueves", now=viernes) == date(2026, 11, 26)
+    assert config.parse_date("mañana", now=viernes) == date(2026, 11, 21)
+
+
+def test_maintenance_page_is_reported():
+    import httpx
+    import pytest
+    from queguagua.alsa.client import AlsaClient
+    from queguagua.alsa.errors import MaintenanceError
+    html = "<!doctype html><html><head><title>Lo sentimos, en estos momentos estamos realizando mejoras en nuestro sistema - ALSA</title></head><body></body></html>"
+    r = httpx.Response(200, text=html, headers={"content-type": "text/html"}, request=httpx.Request("GET", "https://www.alsa.es/"))
+    with pytest.raises(MaintenanceError) as e:
+        AlsaClient._check_block(object.__new__(AlsaClient), r)
+    assert e.value.to_dict()["type"] == "maintenance"
+    assert "hint" in e.value.to_dict()

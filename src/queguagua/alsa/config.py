@@ -44,21 +44,32 @@ def today() -> date:
     return datetime.now(MADRID).date()
 
 
-def parse_date(value: str) -> date:
-    """YYYY-MM-DD, DD/MM/YYYY, `today`, `tomorrow`, `hoy` or `mañana`."""
+WEEKDAYS = {
+    "monday": 0, "tuesday": 1, "wednesday": 2, "thursday": 3, "friday": 4, "saturday": 5, "sunday": 6,
+    "lunes": 0, "martes": 1, "miercoles": 2, "miércoles": 2, "jueves": 3, "viernes": 4, "sabado": 5,
+    "sábado": 5, "domingo": 6,
+}
+
+
+def parse_date(value: str, *, now: date | None = None) -> date:
+    """YYYY-MM-DD, DD/MM/YYYY, `today`, `tomorrow`, `hoy`, `mañana` or a weekday (`friday`, `viernes`):
+    the next one after today, so on a Friday `viernes` is a week away."""
     from .errors import UsageError
 
     v = value.strip().lower()
+    base = now or today()
     if v in ("today", "hoy"):
-        return today()
+        return base
     if v in ("tomorrow", "mañana", "manana"):
-        return today() + timedelta(days=1)
+        return base + timedelta(days=1)
+    if v in WEEKDAYS:
+        return base + timedelta(days=(WEEKDAYS[v] - base.weekday() - 1) % 7 + 1)
     for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%d-%m-%Y"):
         try:
             return datetime.strptime(value.strip(), fmt).date()
         except ValueError:
             pass
-    raise UsageError(f"bad date {value!r}: use YYYY-MM-DD, DD/MM/YYYY, today or tomorrow")
+    raise UsageError(f"bad date {value!r}: use YYYY-MM-DD, DD/MM/YYYY, today, tomorrow or a weekday")
 
 
 def alsa_date(d: date) -> str:

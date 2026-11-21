@@ -24,10 +24,11 @@ from urllib.parse import urlencode, urlsplit
 import httpx
 
 from . import cachefile, config, pageparams
-from .errors import AlsaError, ApiShapeError, BlockedError, UpstreamError
+from .errors import AlsaError, ApiShapeError, BlockedError, MaintenanceError, UpstreamError
 
 _QUEUE_HOST = "queue-it.net"
 _CHALLENGE = re.compile(r"_Incapsula_Resource|Incapsula incident ID|Request unsuccessful\. Incapsula", re.I)
+_MAINTENANCE = re.compile(r"estamos realizando mejoras en nuestro sistema", re.I)
 _RETRYABLE = {500, 502, 503, 504}
 _MAX_TRIES = 3
 
@@ -132,6 +133,9 @@ class AlsaClient:
         self._absorb(r)
 
     def _check_block(self, r: httpx.Response) -> None:
+        if _is_html(r) and _MAINTENANCE.search(r.text[:3000]):
+            raise MaintenanceError("ALSA is down for maintenance (\"estamos realizando mejoras en nuestro sistema\")",
+                                   status=r.status_code)
         if r.status_code in (403, 429):
             raise BlockedError(f"ALSA refused the request ({r.status_code})", status=r.status_code)
         if _is_html(r) and r.status_code >= 400 and _CHALLENGE.search(r.text[:5000]):

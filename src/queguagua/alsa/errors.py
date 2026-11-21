@@ -74,6 +74,17 @@ class UpstreamError(BlockedError):
     kind = "upstream_unavailable"
 
 
+class MaintenanceError(UpstreamError):
+    """ALSA's own "estamos realizando mejoras en nuestro sistema" page: the site is down for maintenance."""
+
+    kind = "maintenance"
+
+    def to_dict(self) -> dict:
+        out = super().to_dict()
+        out["hint"] = "ALSA usually does this at night for a while; try again later."
+        return out
+
+
 class ApiShapeError(AlsaError):
     """Unexpected status or page shape: ALSA's website probably changed."""
 
