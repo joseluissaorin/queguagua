@@ -30,15 +30,18 @@ def _walk(o: Any, keys: tuple[str, ...]) -> Any:
     return None
 
 
+def find_locator(purchase: dict) -> str | None:
+    found = _walk(purchase, ("ticketLocator", "locator", "localizador", "purchaseLocator"))
+    return found if isinstance(found, str) else None
+
+
 def parse_result(client: AlsaClient, html: str, url: str | None = None) -> dict:
     params = pageparams.parse(html)
     pur = params.get("purchase", {})
     err = params.get("", {}).get("errorMessageKey") or pur.get("errorMessageKey")
     if (url and "RuntimeErrorRender" in url) or err:
         raise PaymentError("ALSA shows an error page instead of a confirmation", alsa_message=str(err) if err else None)
-    locator = _walk(pur, ("ticketLocator", "locator", "localizador", "purchaseLocator"))
-    if not isinstance(locator, str):
-        locator = None
+    locator = find_locator(pur)
     pdf_url = pur.get("getTicketPDFResourceURL")
     wallets = pur.get("jsonWalletList") if isinstance(pur.get("jsonWalletList"), list) else []
     out: dict[str, Any] = {"status": "confirmed" if locator else "unconfirmed", "locator": locator}

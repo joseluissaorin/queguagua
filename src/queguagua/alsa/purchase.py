@@ -266,5 +266,6 @@ def buy(client: AlsaClient, req: search_mod.SearchRequest, opt: BuyOptions, *, c
     from . import gateway
 
     out.update(gateway.complete(client, res["url"], res.get("method", "POST"), browser=browser,
-                                headless=headless_gateway, method=method))
+                                headless=headless_gateway, method=method, html=res.get("html"),
+                                page_url=res.get("page_url")))
     return out

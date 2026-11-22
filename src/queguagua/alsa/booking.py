@@ -27,10 +27,12 @@ from .errors import ApiShapeError, PaymentError, UsageError
 
 P = config.PURCHASE_PORTLET
 
+# By the first word of the package's name: with the Abono Único ALSA sells the same three under other ids
+# ("Superflexible Abono Único" is 1428, not 624).
 PACKAGE_ALIASES = {
-    "basica": "45", "básica": "45", "basic": "45",
-    "flexible": "1001", "flex": "1001",
-    "superflexible": "624", "super": "624", "superflex": "624",
+    "basica": "basica", "basic": "basica",
+    "flexible": "flexible", "flex": "flexible",
+    "superflexible": "superflexible", "super": "superflexible", "superflex": "superflexible",
 }
 
 EXTRA_ALIASES = {
@@ -233,11 +235,12 @@ class Checkout:
         avail = [p for p in pkgs if p["available"]]
         if package is None:
             return min(avail or pkgs, key=lambda p: p["extra_price"] or 0)
-        want = PACKAGE_ALIASES.get(package.lower(), package)
         from .stations import fold
 
+        want = PACKAGE_ALIASES.get(fold(package))
         for p in pkgs:
-            if p["id"] == want or fold(p["name"] or "") == fold(package):
+            name = fold(p["name"] or "")
+            if p["id"] == package or name == fold(package) or (want and name.split(" ")[0] == want):
                 if not p["available"]:
                     raise UsageError(f"the {p['name']} package isn't available on that journey",
                                      details={"available": [x["name"] for x in pkgs if x["available"]]})
@@ -573,7 +576,9 @@ class Checkout:
             return {"kind": "gateway", "url": loc, "method": "GET"}
         m = re.search(r'<form[^>]*id="envio"[^>]*action="([^"]+)"', r.text)
         if m:
-            return {"kind": "gateway", "url": m.group(1).replace("&amp;", "&"), "method": "POST"}
+            # The browser has to submit it from this very page (see gateway.py), so keep the page too.
+            return {"kind": "gateway", "url": m.group(1).replace("&amp;", "&"), "method": "POST",
+                    "html": r.text, "page_url": str(r.url)}
         params = pageparams.parse(r.text)
         err = params.get("", {}).get("errorMessageKey")
         if err or "RuntimeErrorRender" in str(r.url):

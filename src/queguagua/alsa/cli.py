@@ -458,7 +458,7 @@ def _buy_command(confirm_default: bool):
         abono_code: Annotated[Optional[str], typer.Option("--abono-code")] = None,
         document: Annotated[Optional[str], typer.Option("--document", help="Abono Único holder's document.")] = None,
         yes: Annotated[bool, typer.Option("--yes", "-y", help="Really buy. Without it nothing is booked or charged.")] = False,
-        browser: Annotated[str, typer.Option("--browser", help="Browser for Worldline's page: chrome (default), "
+        browser: Annotated[str, typer.Option("--browser", help="Browser for the payment page: chrome (default), "
                                              "msedge or chromium.")] = "chrome",
     ) -> None:
         def produce():

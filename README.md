@@ -42,9 +42,10 @@ uv tool install 'queguagua[checkout] @ git+https://github.com/joseluissaorin/que
 queguagua --help        # or the short form: qg
 ```
 
-The `checkout` extra (Playwright, driving your installed Google Chrome) is only needed to pay through
-Worldline's page: a new card, the CVC or 3-D Secure step of a saved card, PayPal, Bizum, Google Pay and
-Klarna. Searching, quoting, the Abono Único, points, purse and everything else work without it.
+The `checkout` extra (Playwright, driving your installed Google Chrome) is only needed when money goes
+through a payment page: the 3-D Secure step of your saved card, or Worldline's page for a new card, PayPal,
+Bizum, Google Pay and Klarna. Searching, quoting, the Abono Único, points, purse and everything else work
+without it.
 
 ## Quick start
 
@@ -115,10 +116,19 @@ With `--yes`:
 
 - if nothing is left to pay, the CLI submits and prints `status: confirmed` with the **locator**, the seat, a
   link to the ticket PDF and the wallet passes;
-- if money is due, ALSA hands the payment to Worldline's hosted page. The CLI opens it in your Google Chrome
-  with its session loaded; you confirm there (the CVC or your bank's 3-D Secure for a saved card, or PayPal,
-  Bizum...). When Worldline returns to ALSA, the CLI reads the confirmation and closes the window. Card data
-  never reaches the CLI.
+- if money is due, ALSA answers with a page that sends your browser to the payment platform: for your saved
+  card, ALSA charges it and the page goes to Mastercard/Visa 3-D Secure (which may pass on its own or ask
+  your bank, in its app or with a code); for a new card, PayPal, Bizum... it goes to Worldline's hosted page.
+  The CLI opens Google Chrome with its session and serves ALSA's payment form at the page's own address, so
+  the browser submits it exactly as on alsa.es. It serves the form without the 58 scripts of the portal
+  around it, any of which could stall the payment. If the page hasn't left for the payment platform after
+  90 s, the CLI stops and says that the bank's check never started. When the platform returns to ALSA,
+  the CLI reads the locator or ALSA's refusal («Transacción cancelada o rechazada») and closes the window.
+  Card data never reaches the CLI.
+
+ALSA keeps the search and the cart in the server session, so commands sharing it run one at a time: a second
+`queguagua alsa` command waits (and says so) until the first one ends. To watch a route while buying, give
+the watcher its own session with `XDG_CACHE_HOME`/`XDG_CONFIG_HOME` pointing elsewhere.
 
 Apple Pay is only offered by ALSA in Safari on its own page, which can't take over the CLI's session, so it
 isn't supported. Open returns (`--open-return`) are priced in `search`, but ALSA's own checkout currently drops
@@ -134,9 +144,22 @@ them at the extras step (its website doesn't offer them either); `buy` says so i
 | Abono Único from the account: check, search at 0 €, **real booking and cancellation** | yes (20 Nov 2026) |
 | Ticket lookup, PDF, cancellation preview and confirmation | yes |
 | Hand-over to Worldline's page with the CLI's session, and back (cancelled there, no card entered) | yes |
+| Points paying the whole fare (a Superflexible upgrade with the Abono Único, 1 €) | yes (22 Nov 2026) |
+| Saved card: ALSA charges it and hands over to 3-D Secure | the hand-over, yes (22 Nov 2026); see below |
 | A real card charge (saved or new card, PayPal, Bizum...) | not yet: nothing was paid |
 | Buying a bono for real | not yet: quotes only |
 | Live GPS in Localiza tu bus | ALSA returned no data on every bus tried |
+
+The saved card failed twice for real on 22 Nov 2026, without a charge either time:
+- the CLI opened the 3-D Secure address itself, query string included. ALSA's page submits it as a GET
+  form, which drops the query, and the bank answered «Transacción cancelada o rechazada»;
+- after that fix, the browser sat on a blank alsa.es page while the seat stayed held. The CLI waited with
+  `time.sleep`, and sync Playwright only handles a page's events and routed requests inside its own calls.
+  On top of that, ALSA's page only submits once its 58 scripts have loaded.
+
+Since then the CLI serves only ALSA's form, waits through Playwright, and gives up after 90 s if the page
+hasn't left for the bank. `tests/test_gateway_browser.py` replays both failures in a real Chrome. A real
+charge hasn't been made since.
 
 ## After buying
 

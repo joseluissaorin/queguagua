@@ -12,11 +12,16 @@ the original request. A real waiting room, a challenge page, 403 or 429 stop the
 the CLI never tries to get past them.
 
 Cookies and the last `p_auth` are kept in the cache dir (`session.json`, mode 0600) so a logged-in Alsa
-Plus session survives between commands. Nothing here logs or echoes cookies, passwords or bodies.
+Plus session survives between commands. Since the search and the cart live in that server session, one
+command uses it at a time (`session.lock`): a search run in the middle of a purchase would replace the
+cart under it. Nothing here logs or echoes cookies, passwords or bodies.
 """
 
+import contextlib
 import json
+import os
 import re
+import sys
 import time
 from typing import Any
 from urllib.parse import urlencode, urlsplit
@@ -25,6 +30,11 @@ import httpx
 
 from . import cachefile, config, pageparams
 from .errors import AlsaError, ApiShapeError, BlockedError, MaintenanceError, UpstreamError
+
+try:
+    import fcntl
+except ImportError:  # Windows: no lock
+    fcntl = None
 
 _QUEUE_HOST = "queue-it.net"
 _CHALLENGE = re.compile(r"_Incapsula_Resource|Incapsula incident ID|Request unsuccessful\. Incapsula", re.I)
@@ -43,6 +53,7 @@ class AlsaClient:
         self.persist = persist
         self.retries: list[dict] = []
         self._p_auth: str | None = None
+        self._lock_fd: int | None = None
         self.http = httpx.Client(
             http2=transport is None,
             transport=transport,
@@ -54,6 +65,7 @@ class AlsaClient:
             },
         )
         if persist:
+            self._lock()
             self._load()
 
     # ---- lifecycle -----------------------------------------------------------------------------------
@@ -68,6 +80,31 @@ class AlsaClient:
         if self.persist:
             self.save()
         self.http.close()
+        self._unlock()
+
+    def _lock(self) -> None:
+        if fcntl is None:
+            return
+        path = config.cache_dir() / "session.lock"
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            fd = os.open(path, os.O_RDWR | os.O_CREAT, 0o600)
+        except OSError:
+            return  # no cache dir: nothing is shared either
+        try:
+            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            print("alsa: another queguagua command is using the ALSA session; waiting for it to finish.",
+                  file=sys.stderr)
+            fcntl.flock(fd, fcntl.LOCK_EX)
+        self._lock_fd = fd
+
+    def _unlock(self) -> None:
+        if self._lock_fd is None:
+            return
+        with contextlib.suppress(OSError):
+            os.close(self._lock_fd)  # closing the descriptor releases the lock
+        self._lock_fd = None
 
     @property
     def _session_path(self):
