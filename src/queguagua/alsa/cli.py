@@ -460,6 +460,9 @@ def _buy_command(confirm_default: bool):
         yes: Annotated[bool, typer.Option("--yes", "-y", help="Really buy. Without it nothing is booked or charged.")] = False,
         browser: Annotated[str, typer.Option("--browser", help="Browser for the payment page: chrome (default), "
                                              "msedge or chromium.")] = "chrome",
+        save_to: Annotated[str, typer.Option("--save-to", help="Where to save the ticket PDF and the Wallet pass "
+                                             "once bought (default: this folder).")] = ".",
+        no_save: Annotated[bool, typer.Option("--no-save", help="Don't save the PDF and the Wallet pass.")] = False,
     ) -> None:
         def produce():
             from . import purchase as purchase_mod
@@ -483,7 +486,10 @@ def _buy_command(confirm_default: bool):
                 if pay == "apple-pay":
                     raise UsageError("Apple Pay only works in Safari on ALSA's own page; the CLI can't hand its "
                                      "session to Safari. Use saved-card, card, google-pay, paypal or bizum.")
-                return purchase_mod.buy(client, req, opt, confirm=(yes and confirm_default), browser=browser)
+                from pathlib import Path
+
+                return purchase_mod.buy(client, req, opt, confirm=(yes and confirm_default), browser=browser,
+                                        save_to=None if no_save else Path(save_to).expanduser())
 
         _emit(produce)
 
@@ -561,6 +567,7 @@ def pdf(
     locator: Annotated[str, typer.Argument(help="Booking locator.")],
     document: DocOpt = None,
     out: Annotated[Optional[str], typer.Option("--out", "-o", help="Where to save it (default ./alsa-<locator>.pdf).")] = None,
+    open_: Annotated[bool, typer.Option("--open", help="Open it afterwards.")] = False,
 ) -> None:
     """Download the ticket PDF."""
 
@@ -570,9 +577,47 @@ def pdf(
         from . import manage as manage_mod
 
         with _client() as client:
-            return manage_mod.download_pdf(client, locator, document, Path(out or f"alsa-{locator.lower()}.pdf"))
+            res = manage_mod.download_pdf(client, locator, document,
+                                          Path(out or f"alsa-{locator.lower()}.pdf").expanduser())
+        if open_:
+            _open_files([res["saved"]])
+        return res
 
     _emit(produce)
+
+
+@app.command()
+def wallet(
+    locator: Annotated[str, typer.Argument(help="Booking locator.")],
+    document: DocOpt = None,
+    out: Annotated[Optional[str], typer.Option("--out", "-o", help="Where to save it (default ./alsa-<locator>.pkpass; "
+                                               "with several passengers or legs, -1, -2...).")] = None,
+    open_: Annotated[bool, typer.Option("--open", help="Open it afterwards (on a Mac: Wallet's preview).")] = False,
+) -> None:
+    """Save the ticket as an Apple Wallet pass (.pkpass), with its boarding QR. Needs a Pass Type ID
+    certificate in the wallet folder (see the README); `buy` saves ALSA's own pass right after buying."""
+
+    def produce():
+        from pathlib import Path
+
+        from . import wallet as wallet_mod
+
+        with _client() as client:
+            res = wallet_mod.build(client, locator, document, Path(out or f"alsa-{locator.lower()}.pkpass").expanduser())
+        if open_:
+            _open_files([p["saved"] for p in res["passes"]])
+        return res
+
+    _emit(produce)
+
+
+def _open_files(paths: list[str]) -> None:
+    import subprocess
+    import sys as _sys
+
+    opener = {"darwin": ["open"], "win32": ["cmd", "/c", "start", ""]}.get(_sys.platform, ["xdg-open"])
+    for p in paths:
+        subprocess.run([*opener, p], check=False)
 
 
 @app.command()

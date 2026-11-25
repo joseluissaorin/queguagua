@@ -115,7 +115,7 @@ the payment methods offered (with your saved card's type and last four digits) a
 With `--yes`:
 
 - if nothing is left to pay, the CLI submits and prints `status: confirmed` with the **locator**, the seat, a
-  link to the ticket PDF and the wallet passes;
+  link to the ticket PDF, and saves the PDF and the Wallet pass (see [After buying](#after-buying));
 - if money is due, ALSA answers with a page that sends your browser to the payment platform: for your saved
   card, ALSA charges it and the page goes to Mastercard/Visa 3-D Secure (which may pass on its own or ask
   your bank, in its app or with a code); for a new card, PayPal, Bizum... it goes to Worldline's hosted page.
@@ -167,11 +167,25 @@ charge hasn't been made since.
 |---|---|
 | `queguagua alsa tickets` | Your Alsa Plus trips (locator, route, date, fare, price, points), plus upcoming locators |
 | `queguagua alsa ticket LOCATOR` | Legs, seat, platform, bus number and plate, live status (`at_platform`, `boarding`, `on_route`...); `--qr` adds the boarding QR text, `--manage` what can be changed or cancelled now |
-| `queguagua alsa pdf LOCATOR` | Saves the ticket PDF |
+| `queguagua alsa pdf LOCATOR` | Saves the ticket PDF (`--open` opens it) |
+| `queguagua alsa wallet LOCATOR` | Saves the ticket as an Apple Wallet pass (`--open` opens it), with the boarding QR |
 | `queguagua alsa cancel LOCATOR` | ALSA's refund preview (ticket price, fee, refund, points returned); `--yes` cancels |
 
 A booking is found by its locator and the passenger's document (your account's by default, or `--document`).
 ALSA only lets a ticket be managed a few minutes after it's issued; the CLI says so when that's the reason.
+
+`buy --yes` saves the PDF and the Wallet pass in the current folder (`--save-to DIR`, or `--no-save`) as soon
+as ALSA confirms, and lists them under `files`. It saves ALSA's own pass when the confirmation offers one:
+ALSA hands it out only then, never afterwards (not in the email, not in the ticket lookup).
+
+For a ticket bought earlier, `wallet` builds the pass itself from the ticket lookup: stops, times, seat,
+platform and the same boarding QR as the PDF. Wallet only accepts signed passes, so this needs a Pass Type ID
+certificate from an Apple developer account, kept in `~/.config/queguagua/alsa/wallet/`:
+- `pass.pem`, the certificate;
+- `pass.key`, its private key;
+- `wwdr.pem`, [Apple's WWDR G4 intermediate](https://www.apple.com/certificateauthority/AppleWWDRCAG4.cer).
+
+The pass type and the team are read from the certificate, and signing runs `openssl`.
 
 ## Bonos and the Abono Único
 

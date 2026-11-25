@@ -10,6 +10,7 @@ nothing is booked or charged. With `--yes` it submits, and then either
 
 import re
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 from . import account, auth, booking, confirmation, config
@@ -237,8 +238,49 @@ def describe(co: Checkout, ctx: dict) -> dict:
     return out
 
 
+def save_tickets(client: AlsaClient, out: dict, folder: Path) -> dict:
+    """Right after a confirmed purchase: the ticket PDF and ALSA's Wallet passes, which it only hands out now.
+
+    Never fails the purchase: what couldn't be saved is listed with the command that fetches it later."""
+    from . import wallet
+
+    loc = out.get("locator")
+    files: dict = {}
+    later = []
+    if not loc:
+        return files
+    if out.get("ticket_pdf_url"):
+        try:
+            dest = folder / f"alsa-{loc}.pdf"
+            confirmation.download_pdf(client, out["ticket_pdf_url"], dest)
+            files["pdf"] = str(dest)
+        except Exception:  # noqa: BLE001 - the ticket is bought; the PDF can come later
+            pass
+    if "pdf" not in files:
+        later.append(f"queguagua alsa pdf {loc}")
+    dest = folder / f"alsa-{loc}.pkpass"
+    passes = []
+    if out.get("wallet_pass_url") and out.get("wallet_passes"):
+        try:
+            passes = wallet.save_official(client, out["wallet_pass_url"], len(out["wallet_passes"]), dest)
+        except Exception:  # noqa: BLE001
+            passes = []
+    if passes:
+        files["wallet"] = passes
+        files["wallet_by"] = "ALSA"
+    else:
+        try:
+            files["wallet"] = [p["saved"] for p in wallet.build(client, loc, None, dest)["passes"]]
+            files["wallet_by"] = "queguagua"
+        except Exception:  # noqa: BLE001 - e.g. no signing certificate, or ALSA still issuing the ticket
+            later.append(f"queguagua alsa wallet {loc}")
+    if later:
+        files["later"] = later
+    return files
+
+
 def buy(client: AlsaClient, req: search_mod.SearchRequest, opt: BuyOptions, *, confirm: bool,
-        browser: str = "chrome", headless_gateway: bool = False) -> dict:
+        browser: str = "chrome", headless_gateway: bool = False, save_to: Path | None = None) -> dict:
     ctx = prepare(client, req, opt, require_login=confirm and needs_account(opt.pay))
     co: Checkout = ctx["checkout"]
     pax, contact = build_people(co, opt, ctx["user"])
@@ -262,10 +304,12 @@ def buy(client: AlsaClient, req: search_mod.SearchRequest, opt: BuyOptions, *, c
     res = co.process_payment(pax, contact, pdata, give)
     if res["kind"] == "page":
         out.update(confirmation.parse_result(client, res["html"], res.get("url")))
-        return out
-    from . import gateway
+    else:
+        from . import gateway
 
-    out.update(gateway.complete(client, res["url"], res.get("method", "POST"), browser=browser,
-                                headless=headless_gateway, method=method, html=res.get("html"),
-                                page_url=res.get("page_url")))
+        out.update(gateway.complete(client, res["url"], res.get("method", "POST"), browser=browser,
+                                    headless=headless_gateway, method=method, html=res.get("html"),
+                                    page_url=res.get("page_url")))
+    if save_to is not None and out.get("status") == "confirmed":
+        out["files"] = save_tickets(client, out, save_to)
     return out

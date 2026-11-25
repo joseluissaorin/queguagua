@@ -50,6 +50,8 @@ def parse_result(client: AlsaClient, html: str, url: str | None = None) -> dict:
     if wallets:
         out["wallet_passes"] = [{"index": i, "from": w.get("nombreOrigen"), "to": w.get("nombreDestino"),
                                  "seat": w.get("asiento")} for i, w in enumerate(wallets)]
+        if pur.get("getWalletResourceURL") and locator:
+            out["wallet_pass_url"] = pur["getWalletResourceURL"]
     if not locator:
         # Keep the page (locally, 0600) so the shape can be fixed; it may hold personal data, so never print it.
         path = config.cache_dir() / "last-confirmation.html"
